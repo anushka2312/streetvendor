@@ -1,6 +1,14 @@
 package com.example.StreetvendorBackend.Service;
 
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
@@ -11,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.StreetvendorBackend.Entity.Product;
 import com.example.StreetvendorBackend.Entity.Vendor;
@@ -34,7 +43,12 @@ public class VendorServices {
 	@Autowired
 	private ProductRepository productrepository;
 	
-	public ResponseVendor RegisterVendor(RequestVendor requestvendor) {
+	public ResponseEntity<String> RegisterVendor(RequestVendor requestvendor) {
+		String username=requestvendor.getVendorname();
+		Optional<Vendor> v=vendorrepository.findByVendorusername(username);
+		if(v.isPresent()) {
+			return new ResponseEntity<String>("vendor with same username exists", HttpStatus.NOT_ACCEPTABLE);
+		}
 		log.info("registering vendor!!");
 		Vendor vendor=Vendor.builder()
 				.vendorusername(requestvendor.getVendorname())
@@ -55,7 +69,7 @@ public class VendorServices {
 		ven.setShopname(vendor.getShopname());
 		ven.setVendorcontact(vendor.getVendorcontact());
 		ven.setVendorname(vendor.getVendorusername());
-		return ven;
+		return new ResponseEntity<String>("Done", HttpStatus.OK);
 	}
 
 	public boolean addproduct(RequestProduct requestproduct , Long vendorid) {
@@ -80,7 +94,6 @@ public class VendorServices {
 		log.info("vendor products updated");
 		return true;
 	}
-
 	
 	public ArrayList<Product> Getproductbyvendorid(Long vendor_id) {
 
@@ -130,7 +143,6 @@ public class VendorServices {
 		          return ResponseEntity.notFound().build();
 		      } 	
 		}
-
 	
 	public ResponseEntity<Vendor> changepassword(String vendorusername, String password) {
 		Optional<Vendor> optionalVendor = vendorrepository.findByVendorusername(vendorusername);
@@ -146,10 +158,44 @@ public class VendorServices {
 	      } 	
 		
 	}
-
-
-
 	
+	public String uploadImage(String path,MultipartFile file,String username)throws IOException {
+
+			
+			log.info("image upload started ");
+			
+			// get incoming file name
+			String name=username + "." + "png";
+			
+			//make full path
+			String filepath=path +File.separator+ name;
+			
+			//create folder if not created
+			File f=new File(path);
+			if(!f.exists()) {
+				log.info("making new file");
+				f.mkdirs();
+			}
+			
+			//copy file
+			try {
+				log.info("copying files done");
+				Files.copy(file.getInputStream(), Paths.get(filepath));
+			} catch (IOException e) {
+				log.info("error while copying");
+				e.printStackTrace();
+				return name ;
+			}
+			
+			return name;
+		}
+
+	public InputStream getImage(String path,String filename) throws FileNotFoundException {
+		String fullpath=path +File.separator +filename;
+		InputStream is=new 	FileInputStream(fullpath);
+		return is;
+	}
+
 	
 	
 	

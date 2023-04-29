@@ -1,13 +1,26 @@
 package com.example.StreetvendorBackend.Controller;
 
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.file.Path;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,9 +30,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.StreetvendorBackend.Entity.Product;
 import com.example.StreetvendorBackend.Entity.Vendor;
+import com.example.StreetvendorBackend.Extras.FileResponse;
 import com.example.StreetvendorBackend.Modal.LoginRequest;
 import com.example.StreetvendorBackend.Modal.RequestProduct;
 import com.example.StreetvendorBackend.Modal.RequestVendor;
@@ -27,8 +42,13 @@ import com.example.StreetvendorBackend.Modal.ResponseVendor;
 import com.example.StreetvendorBackend.Repositrory.VendorRepository;
 import com.example.StreetvendorBackend.Service.VendorServices;
 
+import lombok.extern.log4j.Log4j2;
+
+
+
 @RestController
 @RequestMapping("vendor")
+@Log4j2
 public class VendorController {
 	
 	//register , login Profile , Change Password , Home
@@ -40,12 +60,12 @@ public class VendorController {
 	private VendorRepository vendorrepoisitory; 	
 	
 	@PostMapping("/register")
-	public ResponseEntity<ResponseVendor> registervendor(@RequestBody RequestVendor requestvendor){
+	public ResponseEntity<String> registervendor(@RequestBody RequestVendor requestvendor){
 
 		
-		ResponseVendor vendor=vendorservice.RegisterVendor(requestvendor);
+		ResponseEntity<String> s=vendorservice.RegisterVendor(requestvendor);
 		
-		return new ResponseEntity<>(vendor, HttpStatus.OK);
+		return s;
 	}
 	
 	@PostMapping("/addproduct/{vendorid}")
@@ -88,5 +108,30 @@ public class VendorController {
 		return vendorservice.changepassword(req.getVendorusername(),req.getPassword());
 		
 	}
-		
+	@Value("${project.image}")
+	private String path;
+	
+	@PostMapping("/upload/{username}")
+	public ResponseEntity<FileResponse> fileupload(@RequestParam("image") MultipartFile image ,
+			@PathVariable String username) throws IOException {
+		    
+		    String filename;
+			filename = vendorservice.uploadImage(path,image,username);
+			return new ResponseEntity<FileResponse>(new FileResponse(filename,"img added"), HttpStatus.OK);
+			
+	}
+	
+	//serve file
+		 @GetMapping("/download/{username}")
+		 public void downloadprofilepic(@PathVariable String username, HttpServletResponse response) throws Exception{
+			 log.info("COPYING ");
+			 InputStream is =this.vendorservice.getImage(path, username +"."+"png");
+			response.setContentType(MediaType.IMAGE_PNG_VALUE);
+			StreamUtils.copy(is, response.getOutputStream());
+			
+			 
+			  
+			    log.info("COPIED.. ");
+			return ;
+		 }
 }
