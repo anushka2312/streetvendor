@@ -5,11 +5,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Builder
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
-public class LoginRequest {
-	private String username;
-	private String password;
+@Builder
+public class RequestUpdateLocation {
+ private double latitude;
+ private double longitude;
 }

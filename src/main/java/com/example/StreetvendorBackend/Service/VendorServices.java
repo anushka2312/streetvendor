@@ -18,17 +18,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.StreetvendorBackend.Helper;
 import com.example.StreetvendorBackend.Entity.Product;
+import com.example.StreetvendorBackend.Entity.User;
 import com.example.StreetvendorBackend.Entity.Vendor;
 import com.example.StreetvendorBackend.Exception.ProductServiceException;
 import com.example.StreetvendorBackend.Modal.LoginRequest;
+import com.example.StreetvendorBackend.Modal.RequestFilter;
 import com.example.StreetvendorBackend.Modal.RequestProduct;
+import com.example.StreetvendorBackend.Modal.RequestUpdateLocation;
 import com.example.StreetvendorBackend.Modal.RequestVendor;
 import com.example.StreetvendorBackend.Modal.ResponseVendor;
+import com.example.StreetvendorBackend.Modal.filtredVendorResponse;
 import com.example.StreetvendorBackend.Repositrory.ProductRepository;
+import com.example.StreetvendorBackend.Repositrory.UserRepository;
 import com.example.StreetvendorBackend.Repositrory.VendorRepository;
 
 import lombok.extern.log4j.Log4j2;
@@ -42,6 +50,9 @@ public class VendorServices {
 	
 	@Autowired
 	private ProductRepository productrepository;
+	
+	@Autowired
+	private UserRepository userrepository;
 	
 	public ResponseEntity<String> RegisterVendor(RequestVendor requestvendor) {
 		String username=requestvendor.getVendorname();
@@ -132,6 +143,7 @@ public class VendorServices {
 	
 	public 	ResponseEntity<Vendor> getVendorByVendorUsernameAndPassword(String vendorUsername, String password) {
 
+
 			log.info(vendorUsername + "  " + password);  
 			Optional<Vendor> optionalVendor = vendorrepository.findByVendorusernameAndPassword(vendorUsername, password);
 		      if (optionalVendor.isPresent()) {
@@ -196,7 +208,104 @@ public class VendorServices {
 		return is;
 	}
 
+	public ArrayList<Vendor> getVendorDetails(Long userid) {
+		User user=userrepository.findById(userid).orElseThrow( () -> new ProductServiceException("wrong userid " ,"USER_NOT_FOUND" ));
+		ArrayList<Vendor> set=(ArrayList<Vendor>) vendorrepository.findAll();
+		return set;
+	}
+
+	public ArrayList<filtredVendorResponse> getVendorDetailsbyfilter(Long userid, RequestFilter filter) {
+		Helper help =new Helper();
+		log.info("getting current user");
+		//gettinmg current user
+		User user=userrepository.findById(userid).orElseThrow( () -> new ProductServiceException("wrong userid " ,"USER_NOT_FOUND" ));
+		
+		log.info("getting all vendors");
+		//get all vendors
+		ArrayList<Vendor> vendors1=(ArrayList<Vendor>) vendorrepository.findAll();
+		
+		log.info("initialize response array");
+		// response arraylist
+		ArrayList<filtredVendorResponse> vendors = new ArrayList<>();
+		
+		log.info("populate vendor response");
+		//populate vendors with distance from user
+		for(Vendor it : vendors1) {
+			//store data in response vector
+			long id=it.getId();
+			String vendorusername=it.getVendorusername();
+			String shopname=it.getShopname();
+			String location=it.getLocation();
+			long contact =it.getVendorcontact();
+			double latitude=it.getLatitude();
+			double longitude=it.getLongitude();
+			//copy data from vendors to response vendor\
+			filtredVendorResponse rv =filtredVendorResponse
+					.builder().id(id)
+					.vendorusername(vendorusername)
+					.shopname(shopname)
+					.location(location)
+					.vendorcontact(contact)
+					.latitude(latitude)
+					.longitude(longitude)
+					.build();
+			
+			double distnace=help.distance(it.getLatitude(), user.getLatitude(),it.getLongitude(),user.getLongitude(), 0.0, 0.0);
+			rv.setDistancefromuser(distnace);
+			vendors.add(rv);
+		}
+		
+		ArrayList<filtredVendorResponse> filteredvendors = new ArrayList<>();
+		
+		log.info("applying filter");
+		if(filter.getArea()!="") {
+			log.info("area filter applying");
+			for(filtredVendorResponse it : vendors) {
+				
+				if(it.getLocation().equals(filter.getArea())) {
+					log.info("got entry");
+					double distnace=help.distance(it.getLatitude(), user.getLatitude(),it.getLongitude(),user.getLatitude(), 0.0, 0.0);
+					
+					filteredvendors.add(it);
+				}
+			}
+		}
+		else if(filter.getShopname()!="") {
+			log.info("shopname filter applying");
+			for(filtredVendorResponse it : vendors) {
+				if(it.getShopname().equals(filter.getShopname())) {
+					filteredvendors.add(it);
+				}
+			}
+		}
+		else if(filter.getNearby()!=-1){
+			log.info("nearby filter applying");
+			long filterrange=filter.getNearby();
+			
+			
+			for(filtredVendorResponse it : vendors) {
+				
+				double distnace=help.distance(it.getLatitude(), user.getLatitude(),it.getLongitude(),user.getLongitude(), 0.0, 0.0);
+				if(filterrange>=distnace) {
+					filteredvendors.add(it);
+				}
+			}
+			
+		}else {
+			log.info("no filter applying");
+			filteredvendors=vendors;
+		}
+		
+		return filteredvendors;
+	}
 	
-	
+	public boolean updatelocation(long userid, RequestUpdateLocation updatedlocation) {
+		Vendor v= vendorrepository.findById(userid).orElseThrow( () -> new ProductServiceException("user with this id  not found " ,"USER_NOT_FOUND" ));
+		v.setLatitude(updatedlocation.getLatitude());
+		v.setLongitude(updatedlocation.getLongitude());
+		vendorrepository.save(v);
+		return true;
+	}
+
 	
 }

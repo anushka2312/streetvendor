@@ -7,17 +7,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
+
 @AllArgsConstructor
 @NoArgsConstructor
+@Data
 @Builder
-public class ResponseVendor {
-	private Long id;
+public class filtredVendorResponse {
+    private Long id;
 	private Long vendorcontact;
-	private String vendorname;
+	private String vendorusername;
 	private String shopname;
 	private String location;
-	private Double latitude;
-	private  Double longitude;
-	
+	private double latitude;
+	private  double longitude;
+	private double distancefromuser;
 }

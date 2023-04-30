@@ -37,6 +37,7 @@ import com.example.StreetvendorBackend.Entity.Vendor;
 import com.example.StreetvendorBackend.Extras.FileResponse;
 import com.example.StreetvendorBackend.Modal.LoginRequest;
 import com.example.StreetvendorBackend.Modal.RequestProduct;
+import com.example.StreetvendorBackend.Modal.RequestUpdateLocation;
 import com.example.StreetvendorBackend.Modal.RequestVendor;
 import com.example.StreetvendorBackend.Modal.ResponseVendor;
 import com.example.StreetvendorBackend.Repositrory.VendorRepository;
@@ -100,12 +101,12 @@ public class VendorController {
 	@GetMapping("/")
 	public ResponseEntity<Vendor> login(@RequestBody LoginRequest req){
 
-		 return vendorservice.getVendorByVendorUsernameAndPassword(req.getVendorusername(),req.getPassword());
+		 return vendorservice.getVendorByVendorUsernameAndPassword(req.getUsername(),req.getPassword());
     }
 	
 	@PutMapping("/changepassword")
 	public  ResponseEntity<Vendor> Changepassword(@RequestBody LoginRequest req) {
-		return vendorservice.changepassword(req.getVendorusername(),req.getPassword());
+		return vendorservice.changepassword(req.getUsername(),req.getPassword());
 		
 	}
 	@Value("${project.image}")
@@ -134,4 +135,10 @@ public class VendorController {
 			    log.info("COPIED.. ");
 			return ;
 		 }
+		 
+		 @PutMapping("/updatelocation/{vendorid}")
+			public boolean updateuserlocation(@PathVariable long vendorid,@RequestBody RequestUpdateLocation updatedlocation) {
+				return vendorservice.updatelocation(vendorid,updatedlocation);
+				
+			}
 }
