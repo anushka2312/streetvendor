@@ -14,4 +14,5 @@ public class RequestVendor {
 	private String location;
 	private double latitude;
 	private double longitude;
+	private String notificationToken;
 }

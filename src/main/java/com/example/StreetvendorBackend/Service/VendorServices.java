@@ -23,7 +23,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.StreetvendorBackend.FirebaseMessagingService;
 import com.example.StreetvendorBackend.Helper;
+import com.example.StreetvendorBackend.NotificationMessage;
 import com.example.StreetvendorBackend.Entity.Product;
 import com.example.StreetvendorBackend.Entity.User;
 import com.example.StreetvendorBackend.Entity.Vendor;
@@ -38,6 +40,7 @@ import com.example.StreetvendorBackend.Modal.filtredVendorResponse;
 import com.example.StreetvendorBackend.Repositrory.ProductRepository;
 import com.example.StreetvendorBackend.Repositrory.UserRepository;
 import com.example.StreetvendorBackend.Repositrory.VendorRepository;
+import com.google.firebase.messaging.FirebaseMessagingException;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -54,6 +57,9 @@ public class VendorServices {
 	@Autowired
 	private UserRepository userrepository;
 	
+	@Autowired
+	FirebaseMessagingService firebasemessagingservice;
+	
 	public ResponseEntity<String> RegisterVendor(RequestVendor requestvendor) {
 		String username=requestvendor.getVendorname();
 		Optional<Vendor> v=vendorrepository.findByVendorusername(username);
@@ -68,6 +74,7 @@ public class VendorServices {
 				.longitude(requestvendor.getLongitude())
 				.location(requestvendor.getLocation())
 				.shopname(requestvendor.getShopname())
+				.notificationToken(requestvendor.getNotificationToken())
 				.build();
 		vendorrepository.save(vendor);
 		log.info("registered vendor!!");
@@ -304,6 +311,47 @@ public class VendorServices {
 		v.setLatitude(updatedlocation.getLatitude());
 		v.setLongitude(updatedlocation.getLongitude());
 		vendorrepository.save(v);
+		return true;
+	}
+
+	public boolean notifynearby(long vendorid, NotificationMessage notificationmessage) {
+		double filterrange =5000.00;
+		
+		Vendor currentvendor= vendorrepository.findById(vendorid).orElseThrow( () -> new ProductServiceException("user with this id  not found " ,"USER_NOT_FOUND" ));;
+		
+		Helper help =new Helper();
+		
+		ArrayList<User> TobeNotifiesUsers=new ArrayList<>();
+		ArrayList<User> users=(ArrayList<User>) userrepository.findAll();
+		for(User it : users) {
+			
+			double distnace=help.distance(it.getLatitude(), currentvendor.getLatitude(),it.getLongitude(),currentvendor.getLongitude(), 0.0, 0.0);
+			if(filterrange>=distnace) {
+				TobeNotifiesUsers.add(it);
+			}
+		}
+		
+//		NotificationMessage
+		
+		for(User it : TobeNotifiesUsers) {
+			
+			NotificationMessage message= NotificationMessage
+					.builder()
+					.recipientToken(notificationmessage.getRecipientToken())
+					.title(notificationmessage.getTitle())
+					.body(notificationmessage.getBody())
+					.data(notificationmessage.getData())
+					.build();
+			log.info("sending notification to nearby");
+			try {
+				String  b=firebasemessagingservice.sendNotificationbyToken(message);
+			} catch (FirebaseMessagingException e) {
+				// TODO Auto-generated catch block
+				log.info("error in snding notification to nearby");
+				e.printStackTrace();
+			}
+		}
+		
 		return true;
 	}
 

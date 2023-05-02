@@ -1,5 +1,7 @@
 package com.example.StreetvendorBackend.Controller;
 
+
+
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -48,7 +50,7 @@ public class UserController {
 	}
 	
 	
-	@GetMapping("/")
+	@PostMapping("/")
 	public ResponseEntity<User> loginuser(@RequestBody LoginRequest req){
 		 return userservices.getuserByUsernameAndPassword(req.getUsername(),req.getPassword());
     }

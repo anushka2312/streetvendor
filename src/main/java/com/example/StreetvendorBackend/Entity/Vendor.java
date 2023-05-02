@@ -55,6 +55,9 @@ public class Vendor {
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 	Set<Product> products;
 	
+	@Column(name="notification_token")
+	private String notificationToken;
+	
 	
 		
 }

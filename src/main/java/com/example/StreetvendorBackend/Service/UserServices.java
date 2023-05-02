@@ -1,7 +1,6 @@
 package com.example.StreetvendorBackend.Service;
 
 import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +14,6 @@ import com.example.StreetvendorBackend.Modal.RequestUser;
 import com.example.StreetvendorBackend.Modal.RequestVendor;
 import com.example.StreetvendorBackend.Modal.ResponseVendor;
 import com.example.StreetvendorBackend.Repositrory.UserRepository;
-
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -40,6 +38,7 @@ public class UserServices {
 				.usercontact(requestuser.getUsercontact())
 				.username(username)
 				.password(requestuser.getPassword())
+				.notificationToken(requestuser.getNotificationToken())
 				.build();
 		
 		userrepopository.save(user);

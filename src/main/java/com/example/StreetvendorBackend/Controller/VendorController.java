@@ -32,7 +32,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.StreetvendorBackend.NotificationMessage;
 import com.example.StreetvendorBackend.Entity.Product;
+import com.example.StreetvendorBackend.Entity.User;
 import com.example.StreetvendorBackend.Entity.Vendor;
 import com.example.StreetvendorBackend.Extras.FileResponse;
 import com.example.StreetvendorBackend.Modal.LoginRequest;
@@ -98,7 +100,7 @@ public class VendorController {
 		 return new ResponseEntity<>(p,HttpStatus.OK);
 	}
 
-	@GetMapping("/")
+	@PostMapping("/")
 	public ResponseEntity<Vendor> login(@RequestBody LoginRequest req){
 
 		 return vendorservice.getVendorByVendorUsernameAndPassword(req.getUsername(),req.getPassword());
@@ -140,5 +142,14 @@ public class VendorController {
 			public boolean updateuserlocation(@PathVariable long vendorid,@RequestBody RequestUpdateLocation updatedlocation) {
 				return vendorservice.updatelocation(vendorid,updatedlocation);
 				
-			}
+		}
+		 
+		 @PostMapping("notifynearby/{vendorid}")
+			 public boolean notifynearby(@PathVariable long vendorid,@RequestBody NotificationMessage notificationmessage){
+			 //get all in range and send notification
+			 ArrayList<User> al=new ArrayList<>();
+			 
+				 return vendorservice.notifynearby(vendorid,notificationmessage);
+		 }
+	
 }
