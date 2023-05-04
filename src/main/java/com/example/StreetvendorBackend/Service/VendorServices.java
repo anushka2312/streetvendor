@@ -118,10 +118,12 @@ public class VendorServices {
 		log.info("finding vendor....");
 		Vendor vendor=vendorrepository.findById(vendor_id).orElseThrow( () -> new ProductServiceException("vendor id not found " ,"VENDOR_NOT_FOUND" ));
 		log.info("found vendor");
-		Set <Product> s1=productrepository.findAllByVendor(vendor);
+		Set <Product> s1=productrepository.findByVendorid(vendor_id);
 		ArrayList<Product> al=new ArrayList<>();
-		
-		al.addAll(s1);
+		for(Product it : s1) {
+			al.add(it);
+			log.info(it);
+		}
 		log.info("returned products");
 		return al;
 	}

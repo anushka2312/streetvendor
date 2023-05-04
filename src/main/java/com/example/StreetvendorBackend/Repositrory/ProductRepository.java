@@ -13,6 +13,6 @@ public interface ProductRepository extends CrudRepository<Product, Long>{
 
 	Set<Product> findAllByVendor(Vendor vendor);
 
-
+	Set<Product> findByVendorid(Long vendor_id);
 
 }
